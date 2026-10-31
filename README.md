@@ -19,3 +19,19 @@ uvicorn app.main:app --reload
 
 - Cek kesehatan: http://localhost:8000/health
 - Dokumentasi API: http://localhost:8000/docs
+
+## Database
+
+```
+alembic upgrade head                 # terapkan migrasi terbaru
+python -m scripts.seed_komoditas     # isi data contoh komoditas (sementara)
+```
+
+## Test
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
+
+Test memakai SQLite di memori, tidak menyentuh database Neon.

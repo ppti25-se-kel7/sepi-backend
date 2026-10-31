@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import select
 
-from app.database import SessionDep, engine
-from app.models import Komoditas, KomoditasPublic
+from app.database import engine
+from app.routers import komoditas
 
 app = FastAPI(title="Sempol API")
+app.include_router(komoditas.router)
 
 
 @app.get("/health")
@@ -19,9 +19,3 @@ def health():
     except SQLAlchemyError:
         database = "error"
     return {"status": "ok", "database": database}
-
-
-@app.get("/komoditas", response_model=list[KomoditasPublic])
-def daftar_komoditas(session: SessionDep):
-    """Daftar semua komoditas, diurutkan berdasarkan nama."""
-    return session.exec(select(Komoditas).order_by(Komoditas.nama)).all()
