@@ -1,6 +1,6 @@
-# sempol-backend
+# sepi-backend
 
-Backend FastAPI untuk aplikasi Sempol.
+Backend FastAPI untuk aplikasi SEPI.
 
 ## Menjalankan di lokal
 
@@ -16,10 +16,6 @@ Isi `DATABASE_URL` di `.env` dengan connection string Neon, lalu:
 ```
 uvicorn app.main:app --reload
 ```
-
-- Cek kesehatan: http://localhost:8000/health
-- Dokumentasi API: http://localhost:8000/docs
-
 ## Database
 
 ```
