@@ -25,6 +25,7 @@ uvicorn app.main:app --reload
 ```
 alembic upgrade head                 # terapkan migrasi terbaru
 python -m scripts.seed_komoditas     # isi data contoh komoditas (sementara)
+python -m scripts.seed_wilayah       # isi data wilayah Jabodetabek (sementara)
 ```
 
 ## Test

@@ -3,10 +3,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import engine
-from app.routers import komoditas
+from app.routers import komoditas, wilayah
 
 app = FastAPI(title="Sempol API")
 app.include_router(komoditas.router)
+app.include_router(wilayah.router)
 
 
 @app.get("/health")
