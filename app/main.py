@@ -3,9 +3,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import engine
+from app.errors import pasang_penanganan_error
 from app.routers import harga, komoditas, wilayah
 
 app = FastAPI(title="Sempol API")
+pasang_penanganan_error(app)
 app.include_router(komoditas.router)
 app.include_router(wilayah.router)
 app.include_router(harga.router)

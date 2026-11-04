@@ -64,13 +64,23 @@ def test_terdekat(client, data_contoh):
 def test_terdekat_koordinat_tidak_valid(client, data_contoh):
     response = client.get("/wilayah/terdekat", params={"lat": 100, "lng": 106.8})
     assert response.status_code == 422
+    assert response.json() == {
+        "kode": "INPUT_TIDAK_VALID",
+        "pesan": "Input tidak valid",
+        "detail": [{"field": "lat", "pesan": "harus ≤ 90"}],
+    }
 
 
 def test_terdekat_tanpa_koordinat(client, data_contoh):
     response = client.get("/wilayah/terdekat")
     assert response.status_code == 422
+    assert response.json()["detail"] == [
+        {"field": "lat", "pesan": "wajib diisi"},
+        {"field": "lng", "pesan": "wajib diisi"},
+    ]
 
 
 def test_terdekat_belum_ada_data(client):
     response = client.get("/wilayah/terdekat", params=BLOK_M)
     assert response.status_code == 404
+    assert response.json()["kode"] == "WILAYAH_TIDAK_DITEMUKAN"

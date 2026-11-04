@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from sqlmodel import col, or_, select
 
 from app.database import SessionDep
+from app.errors import AppError, ErrorResponse
 from app.models import Komoditas, KomoditasPublic
 
 router = APIRouter(prefix="/komoditas", tags=["komoditas"])
@@ -23,10 +24,14 @@ def daftar_komoditas(session: SessionDep, q: str | None = None):
     return session.exec(query).all()
 
 
-@router.get("/{label}", response_model=KomoditasPublic)
+@router.get(
+    "/{label}",
+    response_model=KomoditasPublic,
+    responses={404: {"model": ErrorResponse, "description": "`KOMODITAS_TIDAK_DITEMUKAN`"}},
+)
 def detail_komoditas(label: str, session: SessionDep):
     """Detail satu komoditas berdasarkan label, mis. `bawang_merah`."""
     komoditas = session.exec(select(Komoditas).where(Komoditas.label == label)).first()
     if komoditas is None:
-        raise HTTPException(status_code=404, detail="Komoditas tidak ditemukan")
+        raise AppError(404, "KOMODITAS_TIDAK_DITEMUKAN", "Komoditas tidak ditemukan")
     return komoditas
