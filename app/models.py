@@ -1,4 +1,6 @@
-from sqlmodel import Field, SQLModel
+from datetime import date
+
+from sqlmodel import CheckConstraint, Field, SQLModel, UniqueConstraint
 
 
 class KomoditasBase(SQLModel):
@@ -34,3 +36,46 @@ class WilayahPublic(WilayahBase):
 
 class WilayahTerdekat(WilayahPublic):
     jarak_km: float  # jarak garis lurus dari lokasi user ke titik tengah wilayah
+
+
+class HargaHarian(SQLModel, table=True):
+    __tablename__ = "harga_harian"
+    __table_args__ = (
+        # satu harga per komoditas, wilayah, jenis pasar, dan tanggal (juga mempercepat cari harga terbaru)
+        UniqueConstraint("komoditas_id", "wilayah_id", "jenis_pasar", "tanggal", name="uq_harga_harian"),
+        CheckConstraint("jenis_pasar IN ('tradisional', 'modern')", name="ck_harga_harian_jenis_pasar"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    tanggal: date
+    komoditas_id: int = Field(foreign_key="komoditas.id")
+    wilayah_id: int = Field(foreign_key="wilayah.id")
+    jenis_pasar: str  # "tradisional" atau "modern"
+    harga: int  # rupiah per satuan komoditas (rata-rata wilayah)
+    sumber: str  # asal data, mis. "PIHPS", "dummy"
+
+
+class KomoditasRingkas(SQLModel):
+    label: str
+    nama: str
+    satuan: str
+
+
+class WilayahRingkas(SQLModel):
+    kode: str
+    nama: str
+
+
+class HargaPasar(SQLModel):
+    status: str  # "tersedia" atau "belum_tersedia"
+    harga: int | None = None  # null kalau belum tersedia, bukan 0
+    tanggal: date | None = None
+    sumber: str | None = None
+
+
+class PerbandinganHarga(SQLModel):
+    komoditas: KomoditasRingkas
+    wilayah: WilayahRingkas
+    keterangan: str = "rata-rata wilayah"
+    tradisional: HargaPasar
+    modern: HargaPasar
