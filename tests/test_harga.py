@@ -62,18 +62,20 @@ def test_pasar_belum_tersedia_null_bukan_nol(client, data_contoh):
 def test_komoditas_tidak_ditemukan(client, data_contoh):
     response = client.get("/prices", params={"komoditas": "durian", "wilayah": "31.74"})
     assert response.status_code == 404
-    assert response.json()["detail"] == "Komoditas tidak ditemukan"
+    assert response.json() == {"kode": "KOMODITAS_TIDAK_DITEMUKAN", "pesan": "Komoditas tidak ditemukan"}
 
 
 def test_wilayah_tidak_ditemukan(client, data_contoh):
     response = client.get("/prices", params={"komoditas": "beras", "wilayah": "99.99"})
     assert response.status_code == 404
-    assert response.json()["detail"] == "Wilayah tidak ditemukan"
+    assert response.json() == {"kode": "WILAYAH_TIDAK_DITEMUKAN", "pesan": "Wilayah tidak ditemukan"}
 
 
 def test_parameter_kurang(client, data_contoh):
     response = client.get("/prices", params={"komoditas": "beras"})
     assert response.status_code == 422
+    assert response.json()["kode"] == "INPUT_TIDAK_VALID"
+    assert response.json()["detail"] == [{"field": "wilayah", "pesan": "wajib diisi"}]
 
 
 def test_harga_dobel_ditolak(session, data_contoh):

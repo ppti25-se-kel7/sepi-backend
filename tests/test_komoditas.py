@@ -53,3 +53,4 @@ def test_detail_komoditas(client, data_contoh):
 def test_detail_komoditas_tidak_ada(client, data_contoh):
     response = client.get("/komoditas/durian")
     assert response.status_code == 404
+    assert response.json() == {"kode": "KOMODITAS_TIDAK_DITEMUKAN", "pesan": "Komoditas tidak ditemukan"}

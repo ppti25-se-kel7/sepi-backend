@@ -1,10 +1,11 @@
 from math import asin, cos, radians, sin, sqrt
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from sqlmodel import col, or_, select
 
 from app.database import SessionDep
+from app.errors import AppError, ErrorResponse
 from app.models import Wilayah, WilayahPublic, WilayahTerdekat
 
 router = APIRouter(prefix="/wilayah", tags=["wilayah"])
@@ -30,7 +31,14 @@ def daftar_wilayah(session: SessionDep, q: str | None = None):
     return session.exec(query).all()
 
 
-@router.get("/terdekat", response_model=WilayahTerdekat)
+@router.get(
+    "/terdekat",
+    response_model=WilayahTerdekat,
+    responses={
+        404: {"model": ErrorResponse, "description": "`WILAYAH_TIDAK_DITEMUKAN`: belum ada data wilayah"},
+        422: {"model": ErrorResponse, "description": "`INPUT_TIDAK_VALID`: lat/lng kosong atau di luar batas"},
+    },
+)
 def wilayah_terdekat(
     session: SessionDep,
     lat: Annotated[float, Query(ge=-90, le=90)],
@@ -39,7 +47,7 @@ def wilayah_terdekat(
     """Wilayah yang titik tengahnya paling dekat dengan koordinat user (dari GPS HP)."""
     semua_wilayah = session.exec(select(Wilayah)).all()
     if not semua_wilayah:
-        raise HTTPException(status_code=404, detail="Belum ada data wilayah")
+        raise AppError(404, "WILAYAH_TIDAK_DITEMUKAN", "Belum ada data wilayah")
     terdekat = min(semua_wilayah, key=lambda w: hitung_jarak_km(lat, lng, w.lat, w.lng))
     jarak = hitung_jarak_km(lat, lng, terdekat.lat, terdekat.lng)
     return WilayahTerdekat(**terdekat.model_dump(), jarak_km=round(jarak, 2))
