@@ -16,6 +16,23 @@ Isi `DATABASE_URL` di `.env` dengan connection string Neon, lalu:
 ```
 uvicorn app.main:app --reload
 ```
+
+Dokumentasi API: buka http://localhost:8000/docs
+
+### Mencoba dari HP asli (Flutter)
+
+HP dan laptop harus satu jaringan WiFi. Jalankan server supaya bisa diakses dari perangkat lain:
+
+```
+uvicorn app.main:app --reload --host 0.0.0.0
+```
+
+Lalu di Flutter pakai alamat `http://<IP-laptop>:8000` (cek IP dengan `ipconfig`). Emulator Android pakai `http://10.0.2.2:8000`. Kalau tidak tersambung, izinkan Python di Windows Firewall.
+
+### Flutter web
+
+Flutter web dari `localhost` (port berapa pun) sudah diizinkan. Untuk alamat lain, isi `CORS_ORIGINS` di `.env`.
+
 ## Database
 
 ```
