@@ -11,7 +11,7 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Isi `DATABASE_URL` di `.env` dengan connection string Neon, lalu:
+Isi `DATABASE_URL` di `.env` dengan connection string Neon (dan `FIREBASE_PROJECT_ID` untuk fitur login), lalu:
 
 ```
 uvicorn app.main:app --reload

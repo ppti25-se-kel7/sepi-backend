@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
-from sqlmodel import CheckConstraint, Field, SQLModel, UniqueConstraint
+from sqlmodel import CheckConstraint, DateTime, Field, SQLModel, UniqueConstraint
 
 
 class KomoditasBase(SQLModel):
@@ -79,3 +79,21 @@ class PerbandinganHarga(SQLModel):
     keterangan: str = "rata-rata wilayah"
     tradisional: HargaPasar
     modern: HargaPasar
+
+
+class Pengguna(SQLModel, table=True):
+    # data login dari Firebase; password tidak pernah disimpan di sini
+    id: int | None = Field(default=None, primary_key=True)
+    firebase_uid: str = Field(unique=True, index=True)  # id user dari Firebase (isi "sub" di token)
+    email: str | None = None  # bisa kosong, mis. login dengan nomor HP
+    nama: str | None = None
+    dibuat_pada: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True)
+    )
+
+
+class PenggunaPublic(SQLModel):
+    id: int
+    email: str | None
+    nama: str | None
+    dibuat_pada: datetime
