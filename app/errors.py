@@ -52,6 +52,11 @@ def terjemahkan_pesan_validasi(error: dict) -> str:
         "greater_than_equal": f"harus ≥ {batas.get('ge', 0):g}",
         "float_parsing": "harus berupa angka",
         "int_parsing": "harus berupa bilangan bulat",
+        "greater_than": f"harus > {batas.get('gt', 0):g}",
+        "string_too_short": "wajib diisi",
+        "string_too_long": f"maksimal {batas.get('max_length', 0)} karakter",
+        "literal_error": f"harus salah satu dari: {batas.get('expected', '')}",
+        "value_error": error["msg"].removeprefix("Value error, "),  # pesan dari validator kita sendiri
     }
     return terjemahan.get(error["type"], error["msg"])
 
@@ -61,6 +66,7 @@ async def tangani_app_error(request: Request, exc: AppError):
 
 
 async def tangani_input_tidak_valid(request: Request, exc: RequestValidationError):
+    # loc terakhir = nama field; untuk validasi seluruh body (mis. "isi komoditas atau nama") isinya "body"
     detail = [
         ErrorDetail(field=str(error["loc"][-1]), pesan=terjemahkan_pesan_validasi(error)) for error in exc.errors()
     ]

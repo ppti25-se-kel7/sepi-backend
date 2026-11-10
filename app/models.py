@@ -147,3 +147,46 @@ class PenggunaPublic(SQLModel):
     email: str | None
     nama: str | None
     dibuat_pada: datetime
+
+
+class Catatan(SQLModel, table=True):
+    # catatan belanja milik satu pengguna (wajib login)
+    __table_args__ = (
+        CheckConstraint("jenis_pasar IN ('tradisional', 'modern')", name="ck_catatan_jenis_pasar"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    pengguna_id: int = Field(foreign_key="pengguna.id", index=True)
+    judul: str  # mis. "Belanja Senin"
+    wilayah_id: int | None = Field(default=None, foreign_key="wilayah.id")  # untuk harga prediksi; boleh kosong
+    jenis_pasar: str = "tradisional"  # pasar tujuan, menentukan harga prediksi yang dipakai
+    dibuat_pada: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True)
+    )
+    diubah_pada: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True)
+    )
+
+
+class CatatanItem(SQLModel, table=True):
+    # satu barang di catatan: dari daftar komoditas ATAU nama ketik sendiri
+    __tablename__ = "catatan_item"
+    __table_args__ = (
+        CheckConstraint(
+            "(komoditas_id IS NULL) <> (nama_bebas IS NULL)", name="ck_catatan_item_komoditas_atau_nama"
+        ),
+        CheckConstraint("jumlah > 0", name="ck_catatan_item_jumlah"),
+        CheckConstraint("harga_manual IS NULL OR harga_manual >= 0", name="ck_catatan_item_harga_manual"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    catatan_id: int = Field(foreign_key="catatan.id", index=True)
+    komoditas_id: int | None = Field(default=None, foreign_key="komoditas.id")
+    nama_bebas: str | None = None  # mis. "kerupuk", kalau barangnya tidak ada di daftar komoditas
+    jumlah: float  # mis. 0.25 untuk 1/4 kg, 250 untuk 250 gram, 1 untuk 1 kresek
+    satuan: str  # bebas: kg, gram, ons, liter, ml, kresek, jumput, ikat, ...
+    harga_manual: int | None = None  # total harga yang diisi user sendiri (menimpa harga prediksi)
+    sudah_dibeli: bool = False
+    dibuat_pada: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True)
+    )
