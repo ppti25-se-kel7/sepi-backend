@@ -10,8 +10,8 @@ BLOK_M = {"lat": -6.2443, "lng": 106.8000}  # Kebayoran Baru, Jakarta Selatan
 def data_contoh(session):
     session.add_all(
         [
-            Wilayah(kode="31.71", nama="Kota Jakarta Selatan", provinsi="DKI Jakarta", lat=-6.2615, lng=106.8106),
-            Wilayah(kode="31.73", nama="Kota Jakarta Pusat", provinsi="DKI Jakarta", lat=-6.1805, lng=106.8284),
+            Wilayah(kode="31.74", nama="Kota Jakarta Selatan", provinsi="DKI Jakarta", lat=-6.2615, lng=106.8106),
+            Wilayah(kode="31.71", nama="Kota Jakarta Pusat", provinsi="DKI Jakarta", lat=-6.1805, lng=106.8284),
             Wilayah(kode="36.71", nama="Kota Tangerang", provinsi="Banten", lat=-6.1781, lng=106.6300),
         ]
     )
@@ -44,19 +44,19 @@ def test_daftar_urut_provinsi_lalu_nama(client, data_contoh):
 
 def test_cari_nama_tidak_peka_huruf_besar_kecil(client, data_contoh):
     response = client.get("/wilayah", params={"q": "SELATAN"})
-    assert [w["kode"] for w in response.json()] == ["31.71"]
+    assert [w["kode"] for w in response.json()] == ["31.74"]
 
 
 def test_cari_lewat_provinsi(client, data_contoh):
     response = client.get("/wilayah", params={"q": "dki"})
-    assert [w["kode"] for w in response.json()] == ["31.73", "31.71"]
+    assert [w["kode"] for w in response.json()] == ["31.71", "31.74"]
 
 
 def test_terdekat(client, data_contoh):
     response = client.get("/wilayah/terdekat", params=BLOK_M)
     assert response.status_code == 200
     data = response.json()
-    assert data["kode"] == "31.71"
+    assert data["kode"] == "31.74"
     assert data["nama"] == "Kota Jakarta Selatan"
     assert 0 < data["jarak_km"] < 5
 

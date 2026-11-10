@@ -3,8 +3,9 @@
 Dummy data: dipakai sampai data asli dari PIHPS/Bapanas tersedia. Semua baris diberi sumber = "dummy".
 Harga dibuat acak tapi tetap (random dengan seed per komoditas, wilayah, dan tanggal),
 jadi harga untuk tanggal yang sama selalu sama kapan pun script dijalankan.
-Kepulauan Seribu sengaja tidak diberi harga pasar modern, untuk contoh status "belum_tersedia".
+Kota Tual sengaja tidak diberi harga pasar modern, untuk contoh status "belum_tersedia".
 Aman dijalankan berulang kali: harga yang sudah ada akan diperbarui, bukan dibuat dobel.
+Komoditas + wilayah yang sudah punya data asli (sumber selain "dummy", mis. PIHPS) dilewati.
 Jalankan seed_komoditas dan seed_wilayah lebih dulu.
 
 Cara menjalankan (dari folder sempol-backend):
@@ -33,7 +34,7 @@ HARGA_DASAR = {
     "tepung_terigu": 13000,
 }
 
-WILAYAH_TANPA_PASAR_MODERN = {"31.01"}  
+WILAYAH_TANPA_PASAR_MODERN = {"81.72"}  # Kota Tual
 
 
 def bulatkan_ratusan(nilai: float) -> int:
@@ -57,9 +58,19 @@ def main():
             for h in session.exec(select(HargaHarian).where(HargaHarian.sumber == "dummy")).all()
         }
 
+        # komoditas + wilayah yang sudah punya data asli (mis. PIHPS) tidak diberi harga dummy sama sekali,
+        # supaya data asli tidak bentrok/tercampur dengan data palsu
+        punya_data_asli = set(
+            session.exec(
+                select(HargaHarian.komoditas_id, HargaHarian.wilayah_id).where(HargaHarian.sumber != "dummy").distinct()
+            ).all()
+        )
+
         jumlah_tambah = jumlah_perbarui = 0
         for komoditas in semua_komoditas:
             for wilayah in semua_wilayah:
+                if (komoditas.id, wilayah.id) in punya_data_asli:
+                    continue
                 for tanggal in daftar_tanggal:
                     # seed per komoditas+wilayah+tanggal: harga tanggal yang sama selalu sama, kapan pun dijalankan
                     acak = random.Random(f"{komoditas.label}-{wilayah.kode}-{tanggal}")
@@ -88,6 +99,7 @@ def main():
         session.commit()
 
     print(f"tambah {jumlah_tambah}, perbarui {jumlah_perbarui} harga dummy ({daftar_tanggal[-1]} s/d {hari_ini})")
+    print(f"dilewati {len(punya_data_asli)} pasangan komoditas+wilayah yang sudah punya data asli")
 
 
 if __name__ == "__main__":
