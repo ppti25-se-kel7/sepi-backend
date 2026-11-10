@@ -205,6 +205,44 @@ class PerbandinganPasar(SQLModel):
     atribusi: str = "© OpenStreetMap contributors"
 
 
+class Resep(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    nama: str = Field(unique=True)  # dipakai juga untuk kata kunci pencarian Cookpad
+    deskripsi: str
+    porsi: int
+    waktu_menit: int | None = None
+
+
+class ResepBahan(SQLModel, table=True):
+    # bahan utama resep yang ada di daftar komoditas (bumbu lain tidak dicatat)
+    __tablename__ = "resep_bahan"
+    __table_args__ = (
+        UniqueConstraint("resep_id", "komoditas_id", name="uq_resep_bahan"),
+        CheckConstraint("jumlah > 0", name="ck_resep_bahan_jumlah"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    resep_id: int = Field(foreign_key="resep.id", index=True)
+    komoditas_id: int = Field(foreign_key="komoditas.id")
+    jumlah: float  # dalam satuan komoditas, mis. 0.25 (kg)
+
+
+class BahanResep(SQLModel):
+    komoditas: KomoditasRingkas
+    jumlah: float  # dalam satuan komoditas (lihat komoditas.satuan)
+
+
+class ResepHarian(SQLModel):
+    id: int
+    nama: str
+    deskripsi: str
+    porsi: int
+    waktu_menit: int | None
+    tanggal: date  # resep ini untuk tanggal berapa (berganti tiap hari)
+    bahan: list[BahanResep]
+    link_cookpad: str  # buka di browser; Cookpad tidak punya API publik, jadi tidak di-scraping
+
+
 class Catatan(SQLModel, table=True):
     # catatan belanja milik satu pengguna (wajib login)
     __table_args__ = (
