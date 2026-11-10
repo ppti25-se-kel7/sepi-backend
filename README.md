@@ -40,7 +40,23 @@ alembic upgrade head                 # terapkan migrasi terbaru
 python -m scripts.seed_komoditas     # isi data contoh komoditas (sementara)
 python -m scripts.seed_wilayah       # isi data wilayah Jabodetabek (sementara)
 python -m scripts.seed_harga_dummy   # isi harga palsu 7 hari terakhir (sementara)
+python -m scripts.seed_prediksi_dummy  # isi prediksi palsu 7 hari ke depan (sementara)
 ```
+
+### Impor prediksi harga (dari model prediksi)
+
+```
+python -m scripts.impor_prediksi path/ke/prediksi.csv
+```
+
+Format CSV (harga_min & harga_max boleh kosong):
+
+```
+komoditas,wilayah,jenis_pasar,tanggal_prediksi,harga,harga_min,harga_max,versi_model
+beras,32.01,tradisional,2026-11-11,15200,14800,15600,v1
+```
+
+Kalau ada baris yang salah, tidak ada yang disimpan dan semua kesalahan ditampilkan.
 
 ## Test
 

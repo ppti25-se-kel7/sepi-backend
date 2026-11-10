@@ -81,6 +81,56 @@ class PerbandinganHarga(SQLModel):
     modern: HargaPasar
 
 
+class PrediksiHarga(SQLModel, table=True):
+    # hasil model prediksi Kay, dimasukkan lewat scripts/impor_prediksi.py
+    __tablename__ = "prediksi_harga"
+    __table_args__ = (
+        # satu prediksi per komoditas, wilayah, jenis pasar, dan tanggal; impor ulang = menimpa dengan yang terbaru
+        UniqueConstraint(
+            "komoditas_id", "wilayah_id", "jenis_pasar", "tanggal_prediksi", name="uq_prediksi_harga"
+        ),
+        CheckConstraint("jenis_pasar IN ('tradisional', 'modern')", name="ck_prediksi_harga_jenis_pasar"),
+        CheckConstraint(
+            "harga > 0 AND (harga_min IS NULL OR harga_min <= harga) AND (harga_max IS NULL OR harga <= harga_max)",
+            name="ck_prediksi_harga_rentang",
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    komoditas_id: int = Field(foreign_key="komoditas.id")
+    wilayah_id: int = Field(foreign_key="wilayah.id")
+    jenis_pasar: str  # "tradisional" atau "modern"
+    tanggal_prediksi: date  # tanggal yang diprediksi (bukan tanggal model dijalankan)
+    harga: int  # perkiraan harga, rupiah per satuan komoditas
+    harga_min: int | None = None  # batas bawah rentang perkiraan (opsional)
+    harga_max: int | None = None  # batas atas rentang perkiraan (opsional)
+    versi_model: str  # mis. "v1", "dummy"
+    dibuat_pada: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True)
+    )
+
+
+class TitikPrediksi(SQLModel):
+    tanggal: date
+    harga: int
+    harga_min: int | None
+    harga_max: int | None
+    versi_model: str
+
+
+class PrediksiPasar(SQLModel):
+    status: str  # "tersedia" atau "belum_tersedia"
+    prediksi: list[TitikPrediksi] = []  # urut dari tanggal terdekat; kosong kalau belum tersedia
+
+
+class PerbandinganPrediksi(SQLModel):
+    komoditas: KomoditasRingkas
+    wilayah: WilayahRingkas
+    keterangan: str = "prediksi rata-rata wilayah"
+    tradisional: PrediksiPasar
+    modern: PrediksiPasar
+
+
 class Pengguna(SQLModel, table=True):
     # data login dari Firebase; password tidak pernah disimpan di sini
     id: int | None = Field(default=None, primary_key=True)
