@@ -19,11 +19,11 @@ class KomoditasPublic(KomoditasBase):
 
 
 class WilayahBase(SQLModel):
-    kode: str = Field(unique=True, index=True)  # kode wilayah Kemendagri, mis. "31.71"
-    nama: str  # mis. "Kota Jakarta Selatan"
-    provinsi: str  # mis. "DKI Jakarta"
-    lat: float  # titik tengah wilayah (lintang)
-    lng: float  # titik tengah wilayah (bujur)
+    kode: str = Field(unique=True, index=True)  # kode wilayah Kemendagri, mis. "32.71"
+    nama: str  # mis. "Kota Bogor"
+    provinsi: str  # mis. "Jawa Barat"
+    lat: float  # titik pusat kota / ibukota kabupaten (lintang)
+    lng: float  # titik pusat kota / ibukota kabupaten (bujur)
 
 
 class Wilayah(WilayahBase, table=True):
@@ -35,7 +35,7 @@ class WilayahPublic(WilayahBase):
 
 
 class WilayahTerdekat(WilayahPublic):
-    jarak_km: float  # jarak garis lurus dari lokasi user ke titik tengah wilayah
+    jarak_km: float  # jarak garis lurus dari lokasi user ke titik pusat wilayah
 
 
 class HargaHarian(SQLModel, table=True):

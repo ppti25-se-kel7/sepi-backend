@@ -38,7 +38,7 @@ Flutter web dari `localhost` (port berapa pun) sudah diizinkan. Untuk alamat lai
 ```
 alembic upgrade head                 # terapkan migrasi terbaru
 python -m scripts.seed_komoditas     # isi data contoh komoditas (sementara)
-python -m scripts.seed_wilayah       # isi data wilayah Jabodetabek (sementara)
+python -m scripts.seed_wilayah       # isi 86 kab/kota yang dicakup PIHPS (kode Kemendagri)
 python -m scripts.seed_harga_dummy   # isi harga palsu 7 hari terakhir (sementara)
 python -m scripts.seed_prediksi_dummy  # isi prediksi palsu 7 hari ke depan (sementara)
 ```

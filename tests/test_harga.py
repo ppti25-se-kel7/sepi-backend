@@ -9,7 +9,7 @@ from app.models import HargaHarian, Komoditas, Wilayah
 @pytest.fixture
 def data_contoh(session):
     beras = Komoditas(label="beras", nama="Beras", satuan="kg")
-    jakbar = Wilayah(kode="31.74", nama="Kota Jakarta Barat", provinsi="DKI Jakarta", lat=-6.17, lng=106.76)
+    jakbar = Wilayah(kode="31.73", nama="Kota Jakarta Barat", provinsi="DKI Jakarta", lat=-6.17, lng=106.76)
     depok = Wilayah(kode="32.76", nama="Kota Depok", provinsi="Jawa Barat", lat=-6.40, lng=106.79)
     session.add_all([beras, jakbar, depok])
     session.commit()
@@ -37,17 +37,17 @@ def data_contoh(session):
 
 
 def test_kedua_pasar_tersedia(client, data_contoh):
-    response = client.get("/prices", params={"komoditas": "beras", "wilayah": "31.74"})
+    response = client.get("/prices", params={"komoditas": "beras", "wilayah": "31.73"})
     assert response.status_code == 200
     data = response.json()
     assert data["komoditas"] == {"label": "beras", "nama": "Beras", "satuan": "kg"}
-    assert data["wilayah"] == {"kode": "31.74", "nama": "Kota Jakarta Barat"}
+    assert data["wilayah"] == {"kode": "31.73", "nama": "Kota Jakarta Barat"}
     assert data["keterangan"] == "rata-rata wilayah"
     assert data["modern"] == {"status": "tersedia", "harga": 16500, "tanggal": "2026-11-02", "sumber": "dummy"}
 
 
 def test_ambil_harga_terbaru(client, data_contoh):
-    response = client.get("/prices", params={"komoditas": "beras", "wilayah": "31.74"})
+    response = client.get("/prices", params={"komoditas": "beras", "wilayah": "31.73"})
     assert response.json()["tradisional"]["harga"] == 15000
     assert response.json()["tradisional"]["tanggal"] == "2026-11-02"
 
@@ -60,7 +60,7 @@ def test_pasar_belum_tersedia_null_bukan_nol(client, data_contoh):
 
 
 def test_komoditas_tidak_ditemukan(client, data_contoh):
-    response = client.get("/prices", params={"komoditas": "durian", "wilayah": "31.74"})
+    response = client.get("/prices", params={"komoditas": "durian", "wilayah": "31.73"})
     assert response.status_code == 404
     assert response.json() == {"kode": "KOMODITAS_TIDAK_DITEMUKAN", "pesan": "Komoditas tidak ditemukan"}
 
