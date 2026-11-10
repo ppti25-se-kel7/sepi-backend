@@ -9,6 +9,8 @@
 Cara menjalankan (dari folder sempol-backend):
     python -m scripts.impor_pasar_osm              # semua wilayah
     python -m scripts.impor_pasar_osm 32.71 32.01  # wilayah tertentu saja
+    python -m scripts.impor_pasar_osm --hanya-yang-kosong  # lanjutkan impor yang terputus
+Kalau server Overpass sibuk, wilayah yang gagal dilewati dan didaftar di akhir untuk diulang.
 """
 
 import json
@@ -47,7 +49,7 @@ def buat_query(lat: float, lng: float) -> str:
     )
 
 
-def ambil_dari_overpass(query: str, percobaan: int = 3) -> list[dict]:
+def ambil_dari_overpass(query: str, percobaan: int = 4) -> list[dict]:
     data = urllib.parse.urlencode({"data": query}).encode()
     for ke in range(1, percobaan + 1):
         permintaan = urllib.request.Request(URL_OVERPASS, data=data, headers={"User-Agent": NAMA_APLIKASI})
@@ -57,8 +59,8 @@ def ambil_dari_overpass(query: str, percobaan: int = 3) -> list[dict]:
         except Exception as e:  # server sibuk (429/504) → tunggu lalu coba lagi
             if ke == percobaan:
                 raise
-            print(f"  gagal ({e}), coba lagi dalam {JEDA_DETIK * 5 * ke} detik")
-            time.sleep(JEDA_DETIK * 5 * ke)
+            print(f"  gagal ({e}), coba lagi dalam {JEDA_DETIK * 15 * ke} detik", flush=True)
+            time.sleep(JEDA_DETIK * 15 * ke)
     return []
 
 
@@ -112,13 +114,24 @@ def simpan_pasar(session: Session, daftar: list[dict], semua_wilayah: list[Wilay
 def main():
     from app.database import engine  # di sini, supaya tes bisa import fungsi di atas tanpa koneksi Neon
 
+    hanya_yang_kosong = "--hanya-yang-kosong" in sys.argv
+    pilihan = {arg for arg in sys.argv[1:] if not arg.startswith("--")}
     with Session(engine) as session:
         semua_wilayah = session.exec(select(Wilayah).order_by(Wilayah.kode)).all()
-        pilihan = set(sys.argv[1:])
         target = [w for w in semua_wilayah if not pilihan or w.kode in pilihan]
+        if hanya_yang_kosong:  # lanjutkan impor yang terputus: lewati wilayah yang sudah punya data pasar
+            sudah_ada = set(session.exec(select(Pasar.wilayah_id).distinct()).all())
+            target = [w for w in target if w.id not in sudah_ada]
+
         total_tambah = total_perbarui = 0
+        gagal = []
         for nomor, wilayah in enumerate(target, start=1):
-            elemen = ambil_dari_overpass(buat_query(wilayah.lat, wilayah.lng))
+            try:
+                elemen = ambil_dari_overpass(buat_query(wilayah.lat, wilayah.lng))
+            except Exception as e:  # server Overpass sibuk terus: catat, lanjut ke wilayah berikutnya
+                gagal.append(wilayah.kode)
+                print(f"[{nomor}/{len(target)}] {wilayah.kode} {wilayah.nama}: GAGAL ({e})", flush=True)
+                continue
             daftar = [d for d in map(ubah_elemen_osm, elemen) if d]
             tambah, perbarui = simpan_pasar(session, daftar, semua_wilayah)
             total_tambah, total_perbarui = total_tambah + tambah, total_perbarui + perbarui
@@ -126,6 +139,10 @@ def main():
                   f"(tambah {tambah}, perbarui {perbarui})", flush=True)
             time.sleep(JEDA_DETIK)
     print(f"selesai: tambah {total_tambah}, perbarui {total_perbarui} pasar")
+    if gagal:
+        print(f"gagal {len(gagal)} wilayah: {' '.join(gagal)}")
+        print(f"ulangi nanti: python -m scripts.impor_pasar_osm {' '.join(gagal)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
