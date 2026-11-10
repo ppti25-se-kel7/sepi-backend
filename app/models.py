@@ -81,6 +81,29 @@ class PerbandinganHarga(SQLModel):
     modern: HargaPasar
 
 
+class RingkasanPasar(SQLModel):
+    harga: int | None = None  # harga terbaru; null kalau belum ada data
+    tanggal: date | None = None
+    sumber: str | None = None
+    prediksi_besok: int | None = None  # null kalau prediksi belum tersedia
+    tren: str | None = None  # "naik" / "turun" / "stabil" (prediksi besok vs harga terbaru, batas ±2%)
+
+
+class RingkasanKomoditas(SQLModel):
+    komoditas: KomoditasRingkas
+    tradisional: RingkasanPasar
+    modern: RingkasanPasar
+
+
+class RingkasanWilayah(SQLModel):
+    # isi pop-up card saat wilayah di peta diklik: semua komoditas sekaligus
+    wilayah: WilayahRingkas
+    provinsi: str
+    keterangan: str = "rata-rata wilayah"
+    tanggal_prediksi: date  # tanggal "besok" yang dipakai untuk prediksi_besok
+    komoditas: list[RingkasanKomoditas]
+
+
 class PrediksiHarga(SQLModel, table=True):
     # hasil model prediksi Kay, dimasukkan lewat scripts/impor_prediksi.py
     __tablename__ = "prediksi_harga"
