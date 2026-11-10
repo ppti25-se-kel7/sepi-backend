@@ -172,6 +172,39 @@ class PenggunaPublic(SQLModel):
     dibuat_pada: datetime
 
 
+class Pasar(SQLModel, table=True):
+    # lokasi pasar dari OpenStreetMap (scripts/impor_pasar_osm.py)
+    __table_args__ = (CheckConstraint("jenis IN ('tradisional', 'modern')", name="ck_pasar_jenis"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    osm_id: str = Field(unique=True, index=True)  # mis. "node/123456", supaya impor ulang tidak dobel
+    nama: str
+    jenis: str  # "tradisional" (amenity=marketplace) atau "modern" (shop=supermarket)
+    lat: float = Field(index=True)
+    lng: float
+    alamat: str | None = None
+    wilayah_id: int | None = Field(default=None, foreign_key="wilayah.id")  # wilayah terdekat
+    sumber: str = "OpenStreetMap"
+
+
+class PasarTerdekat(SQLModel):
+    id: int
+    nama: str
+    jenis: str
+    lat: float
+    lng: float
+    alamat: str | None
+    jarak_km: float
+
+
+class PerbandinganPasar(SQLModel):
+    tradisional: PasarTerdekat | None  # null kalau tidak ada dalam radius
+    modern: PasarTerdekat | None
+    lebih_dekat: str | None  # "tradisional" / "modern"; null kalau keduanya tidak ada
+    radius_km: float
+    atribusi: str = "© OpenStreetMap contributors"
+
+
 class Catatan(SQLModel, table=True):
     # catatan belanja milik satu pengguna (wajib login)
     __table_args__ = (
