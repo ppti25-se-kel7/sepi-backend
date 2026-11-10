@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.config import settings
 from app.database import engine
 from app.errors import pasang_penanganan_error
-from app.routers import harga, komoditas, wilayah
+from app.routers import harga, komoditas, pengguna, wilayah
 
 app = FastAPI(title="Sempol API")
 pasang_penanganan_error(app)
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(komoditas.router)
 app.include_router(wilayah.router)
 app.include_router(harga.router)
+app.include_router(pengguna.router)
 
 
 @app.get("/health")

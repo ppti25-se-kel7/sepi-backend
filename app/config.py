@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     # alamat website (Flutter web) yang boleh memanggil API ini, dipisah koma.
     # localhost (port berapa pun) selalu diizinkan untuk pengembangan, tidak perlu ditulis di sini.
     cors_origins: str = ""
+    # Project ID Firebase (Project settings → General). Kosong = fitur login belum aktif.
+    firebase_project_id: str = ""
 
     @property
     def daftar_cors_origins(self) -> list[str]:
