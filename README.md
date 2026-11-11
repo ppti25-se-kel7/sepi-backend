@@ -41,7 +41,11 @@ python -m scripts.seed_komoditas     # isi data contoh komoditas (sementara)
 python -m scripts.seed_wilayah       # isi 86 kab/kota yang dicakup PIHPS (kode Kemendagri)
 python -m scripts.seed_harga_dummy   # isi harga palsu 7 hari terakhir (sementara)
 python -m scripts.seed_prediksi_dummy  # isi prediksi palsu 7 hari ke depan (sementara)
+python -m scripts.impor_pasar_osm    # ambil lokasi pasar dari OpenStreetMap (beberapa menit)
+python -m scripts.seed_resep         # isi resep harian contoh
 ```
+
+Data pasar © OpenStreetMap contributors (lisensi ODbL).
 
 ### Impor prediksi harga (dari model prediksi)
 

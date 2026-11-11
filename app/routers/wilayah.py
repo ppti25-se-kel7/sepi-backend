@@ -1,12 +1,26 @@
+from datetime import timedelta
 from math import asin, cos, radians, sin, sqrt
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from sqlmodel import col, or_, select
+from sqlmodel import and_, col, func, or_, select
 
 from app.database import SessionDep
 from app.errors import AppError, ErrorResponse
-from app.models import Wilayah, WilayahPublic, WilayahTerdekat
+from app.models import (
+    HargaHarian,
+    Komoditas,
+    KomoditasRingkas,
+    PrediksiHarga,
+    RingkasanKomoditas,
+    RingkasanPasar,
+    RingkasanWilayah,
+    Wilayah,
+    WilayahPublic,
+    WilayahRingkas,
+    WilayahTerdekat,
+)
+from app.routers import prediksi
 
 router = APIRouter(prefix="/wilayah", tags=["wilayah"])
 
@@ -55,3 +69,90 @@ def wilayah_terdekat(
     terdekat = min(semua_wilayah, key=lambda w: hitung_jarak_km(lat, lng, w.lat, w.lng))
     jarak = hitung_jarak_km(lat, lng, terdekat.lat, terdekat.lng)
     return WilayahTerdekat(**terdekat.model_dump(), jarak_km=round(jarak, 2))
+
+
+BATAS_STABIL = 0.02  # perubahan di bawah 2% dianggap stabil
+
+
+def tentukan_tren(harga: int | None, prediksi_besok: int | None) -> str | None:
+    if harga is None or prediksi_besok is None:
+        return None
+    selisih = (prediksi_besok - harga) / harga
+    if selisih > BATAS_STABIL:
+        return "naik"
+    if selisih < -BATAS_STABIL:
+        return "turun"
+    return "stabil"
+
+
+@router.get(
+    "/{kode}/ringkasan",
+    response_model=RingkasanWilayah,
+    responses={404: {"model": ErrorResponse, "description": "`WILAYAH_TIDAK_DITEMUKAN`"}},
+)
+def ringkasan_wilayah(kode: str, session: SessionDep):
+    """Isi pop-up card peta: harga terbaru + prediksi besok + tren, untuk semua komoditas di satu wilayah."""
+    wilayah = session.exec(select(Wilayah).where(Wilayah.kode == kode)).first()
+    if wilayah is None:
+        raise AppError(404, "WILAYAH_TIDAK_DITEMUKAN", "Wilayah tidak ditemukan")
+
+    # harga terbaru per komoditas + jenis pasar: cari tanggal maksimum dulu, lalu ambil barisnya
+    tanggal_terbaru = (
+        select(
+            HargaHarian.komoditas_id,
+            HargaHarian.jenis_pasar,
+            func.max(HargaHarian.tanggal).label("tanggal"),
+        )
+        .where(HargaHarian.wilayah_id == wilayah.id)
+        .group_by(HargaHarian.komoditas_id, HargaHarian.jenis_pasar)
+        .subquery()
+    )
+    harga = {
+        (h.komoditas_id, h.jenis_pasar): h
+        for h in session.exec(
+            select(HargaHarian).join(
+                tanggal_terbaru,
+                and_(
+                    HargaHarian.komoditas_id == tanggal_terbaru.c.komoditas_id,
+                    HargaHarian.jenis_pasar == tanggal_terbaru.c.jenis_pasar,
+                    HargaHarian.tanggal == tanggal_terbaru.c.tanggal,
+                ),
+            ).where(HargaHarian.wilayah_id == wilayah.id)
+        ).all()
+    }
+
+    besok = prediksi.hari_ini() + timedelta(days=1)
+    prediksi_besok = {
+        (p.komoditas_id, p.jenis_pasar): p.harga
+        for p in session.exec(
+            select(PrediksiHarga).where(
+                PrediksiHarga.wilayah_id == wilayah.id, PrediksiHarga.tanggal_prediksi == besok
+            )
+        ).all()
+    }
+
+    def ringkas_pasar(komoditas_id: int, jenis_pasar: str) -> RingkasanPasar:
+        h = harga.get((komoditas_id, jenis_pasar))
+        p = prediksi_besok.get((komoditas_id, jenis_pasar))
+        return RingkasanPasar(
+            harga=h.harga if h else None,
+            tanggal=h.tanggal if h else None,
+            sumber=h.sumber if h else None,
+            prediksi_besok=p,
+            tren=tentukan_tren(h.harga if h else None, p),
+        )
+
+    semua_komoditas = session.exec(select(Komoditas).order_by(Komoditas.nama)).all()
+    return RingkasanWilayah(
+        wilayah=WilayahRingkas.model_validate(wilayah),
+        provinsi=wilayah.provinsi,
+        tanggal_prediksi=besok,
+        komoditas=[
+            RingkasanKomoditas(
+                komoditas=KomoditasRingkas.model_validate(k),
+                tradisional=ringkas_pasar(k.id, "tradisional"),
+                modern=ringkas_pasar(k.id, "modern"),
+            )
+            for k in semua_komoditas
+        ],
+    )
