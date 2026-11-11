@@ -41,7 +41,7 @@ def harga_terbaru(session: Session, komoditas_id: int, wilayah_id: int, jenis_pa
     },
 )
 def perbandingan_harga(komoditas: str, wilayah: str, session: SessionDep):
-    """Harga terbaru pasar tradisional vs modern. `komoditas` = label (mis. `beras`), `wilayah` = kode (mis. `31.74`)."""
+    """Harga terbaru pasar tradisional vs modern. `komoditas` = label (mis. `beras`), `wilayah` = kode (mis. `32.71`)."""
     data_komoditas = session.exec(select(Komoditas).where(Komoditas.label == komoditas)).first()
     if data_komoditas is None:
         raise AppError(404, "KOMODITAS_TIDAK_DITEMUKAN", "Komoditas tidak ditemukan")

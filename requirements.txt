@@ -5,3 +5,4 @@ psycopg[binary]==3.3.6
 pydantic-settings==2.16.1
 alembic==1.20.1
 pyjwt[crypto]==2.15.1
+scalar-fastapi==1.9.1

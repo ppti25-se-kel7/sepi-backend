@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     cors_origins: str = ""
     # Project ID Firebase (Project settings → General). Kosong = fitur login belum aktif.
     firebase_project_id: str = ""
+    # Login halaman dokumentasi API (/docs) untuk tim. Password kosong = dokumentasi terbuka tanpa login.
+    docs_username: str = "admin"
+    docs_password: str = ""
 
     @property
     def daftar_cors_origins(self) -> list[str]:

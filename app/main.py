@@ -5,11 +5,23 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.database import engine
+from app.dokumentasi import pasang_dokumentasi
 from app.errors import pasang_penanganan_error
 from app.routers import catatan, harga, komoditas, pasar, pengguna, prediksi, resep, wilayah
 
-app = FastAPI(title="Sempol API")
+DESKRIPSI = """
+Backend aplikasi **SEPI**: harga pangan pasar tradisional vs modern, prediksi harga, peta, pasar terdekat,
+catatan belanja, dan resep harian.
+
+- Semua error berbentuk `{"kode": ..., "pesan": ...}`; `kode` dipakai Flutter, `pesan` ditampilkan ke user.
+- Endpoint bertanda gembok wajib header `Authorization: Bearer <ID token Firebase>`.
+- Data pasar © OpenStreetMap contributors. Data harga: PIHPS Bank Indonesia.
+"""
+
+# docs/redoc/openapi bawaan dimatikan, diganti versi dengan login di app/dokumentasi.py
+app = FastAPI(title="SEPI API", description=DESKRIPSI, docs_url=None, redoc_url=None, openapi_url=None)
 pasang_penanganan_error(app)
+pasang_dokumentasi(app)
 
 # CORS: izin untuk Flutter web memanggil API dari alamat lain (aplikasi Android tidak terpengaruh)
 app.add_middleware(
