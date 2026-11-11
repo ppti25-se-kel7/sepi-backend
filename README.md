@@ -17,7 +17,11 @@ Isi `DATABASE_URL` di `.env` dengan connection string Neon (dan `FIREBASE_PROJEC
 uvicorn app.main:app --reload
 ```
 
-Dokumentasi API: buka http://localhost:8000/docs
+Dokumentasi API: buka http://localhost:8000/docs (Scalar: daftar endpoint, tombol **Test Request**,
+contoh kode Dart untuk Flutter). Cadangan: `/swagger` dan `/redoc`.
+
+Kalau `DOCS_PASSWORD` di `.env` diisi, dokumentasi harus login dulu (username `DOCS_USERNAME`).
+Kosongkan di laptop; **wajib diisi** saat backend online di server.
 
 ### Mencoba dari HP asli (Flutter)
 
